@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'task',
 ]
 
@@ -118,4 +119,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Django Rest Framework
+# Django Rest Framework Parsers Usage
+
+REST_FRAMEWORK = {
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+    ]
+}

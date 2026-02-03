@@ -1,9 +1,11 @@
-# from rest_framework.decorators import api_view, permission_classes
+# from rest_framework.decorators import api_view, authentication_classes, permission_classes
 # from task.models import Task
 # from task.serializers import TaskSerializers, UserSerializer
 # from task.permissions import IsOwnerOrReadOnly
+# from rest_framework import permissions
 # from rest_framework.exceptions import PermissionDenied
 # from rest_framework import status
+# from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 # from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 # from django.contrib.auth.models import User
 # from rest_framework.response import Response
@@ -13,9 +15,9 @@
 # # Task Related views
 
 # @api_view(['GET', 'POST'])
+# @authentication_classes([TokenAuthentication, SessionAuthentication])
 # @permission_classes([IsAuthenticatedOrReadOnly])
 # def task_list(request):
-
 #  #this is about listing all tasks, or creating a new one  
 #    if request.method == "GET":
 #        tasks = Task.objects.filter(user=request.user)
@@ -29,11 +31,12 @@
 #             return Response(serializer.data, status=status.HTTP_201_CREATED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    
 # @api_view(['GET', 'PUT', 'DELETE'])
+# @authentication_classes([TokenAuthentication, SessionAuthentication])
 # @permission_classes([IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly])
 # def task_detail(request, pk):
-
-# this is aout retrieving, updating or deleting a task. and also here the object-level permissions are being handled by IsOwnerOrReadOnly.
+# # this is aout retrieving, updating or deleting a task. and also here the object-level permissions are being handled by IsOwnerOrReadOnly.
 
 #     try:
 #         task = Task.objects.get(pk=pk)
@@ -62,6 +65,29 @@
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # # User related views
+
+# @api_view(['POST'])
+# @permission_classes([permissions.AllowAny])
+# def generate_token(request):
+#     username = request.data.get('username')
+
+#     if not username:
+#         return Response(
+#             {'error': 'username is required'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     try:
+#         user = User.objects.get(username=username)
+#     except User.DoesNotExist:
+#         return Response(
+#             {'error': 'user is not found'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+
+#     token, created = Token.objects.get_or_create(user=user)
+#     return Response({'token': token.key})
+
 # @api_view(['GET'])
 # @permission_classes([IsAdminUser])
 # def user_list(request):
@@ -70,6 +96,7 @@
 #     return Response(serializer.data)
 
 # @api_view(['GET'])
+# @authentication_classes([TokenAuthentication, SessionAuthentication])
 # @permission_classes([IsAuthenticated])
 # def user_detail(request):
 #     serializer = UserSerializer(request.user)
@@ -77,23 +104,26 @@
  
    
 
-# Class Based Views:
+# # Class Based Views:
 
-# Views For Task
+# # Views For Task
 # from rest_framework.views import APIView
+# from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 # from rest_framework.response import Response
 # from rest_framework import status
 # from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
+# from rest_framework import permissions
 # from rest_framework.exceptions import PermissionDenied
 # from django.contrib.auth.models import User
 # from task.models import Task
 # from task.serializers import TaskSerializers, UserSerializer
 # from task.permissions import IsOwnerOrReadOnly
 
-# Views for Users
+# # Views for Users
 
 # class TaskList(APIView):
 #     # this is about listing all tasks for the logged in user or creating a new task
+#     authentication_classes = [TokenAuthentication, SessionAuthentication]
 #     permission_classes = [IsAuthenticatedOrReadOnly]
     
 #     def get(self, request):
@@ -110,6 +140,7 @@
      
 # class TaskDetail(APIView):
 #     # this is aout retrieving, updating or deleting a task. and also here the object-level permissions are being handled by IsOwnerOrReadOnly.
+#     authentication_classes = [TokenAuthentication, SessionAuthentication]
 #     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
 #     def get_object(self, pk):
@@ -148,6 +179,29 @@
 
 # # User Views
 
+# class GenerateTokenAPIView(APIView):
+#     permission_classes = [permissions.AllowAny]
+
+#     def post(self, request):
+#         username = request.data.get('username')
+
+#         if not username:
+#             return Response(
+#                 {'error': 'username is required'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         try:
+#             user = User.objects.get(username=username)
+#         except User.DoesNotExist:
+#             return Response(
+#                 {'error': 'user is not found'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+
+#         token, created = Token.objects.get_or_create(user=user)
+#         return Response({'token': token.key})
+
 # class UserList(APIView):
 #    # Listing all the users with admin control
 #     permission_classes = [IsAdminUser]
@@ -159,44 +213,137 @@
 
 # class UserDetail(APIView):
 #     # Returing the data of the currently logged-in user
+#     authentication_classes = [TokenAuthentication, SessionAuthentication]
 #     permission_classes = [IsAuthenticated]
 #     def get(self, request):
 #         serializer = UserSerializer(request.user)
 #         return Response(serializer.data)
 
 
-# Writing views using Viewsets()
 
-from rest_framework import viewsets
-from rest_framework import permissions
-from django.contrib.auth.models import User
+# Writing views using generic class based views()
+
+# Task Related Views:
+from rest_framework.views import APIView
+from rest_framework import mixins
+from rest_framework import generics
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
+from rest_framework import status
+from rest_framework import permissions
 from task.models import Task
 from task.serializers import TaskSerializers, UserSerializer
 from task.permissions import IsOwnerOrReadOnly
-from rest_framework.decorators import action
+from django.contrib.auth.models import User
 
-
-class TaskViewSet(viewsets.ModelViewSet):
-    # this will automatically generate the functionality for retrieving, updating or deleting a task. and also here the object-level permissions are being handled by IsOwnerOrReadOnly.
-    queryset = Task.objects.all()
+class TaskListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     serializer_class = TaskSerializers
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    
+    def get_queryset(self):
+       if not self.request.user.is_authenticated:
+          return Task.objects.none()
+       return Task.objects.filter(user=self.request.user)
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-        
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    # this will automatically generate us the list and detail functionality
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+    
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+    
+class TaskDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+    queryset = Task.objects.all()
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    serializer_class = TaskSerializers
+    
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+    
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+    
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+    
+# User Related Views
 
-    @action(detail=False, methods=['get'])
-    def user_detail(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+class GenerateTokenView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        if not username:
+            return Response({'error': 'username is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'error': 'user is not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key})
+
+class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = User.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = UserSerializer
+    
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+    
+class UserDetailView(generics.RetrieveAPIView):
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+    
+    def get_object(self):
+        return self.request.user
+   
     
     
+
+# # Writing views using Viewsets()
+
+# from rest_framework import viewsets
+# from rest_framework import permissions
+# # from rest_framework.parsers import JSONParser, FormParser
+# from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+# from django.contrib.auth.models import User
+# from rest_framework.response import Response
+# from task.models import Task
+# from task.serializers import TaskSerializers, UserSerializer
+# from task.permissions import IsOwnerOrReadOnly
+# from rest_framework.decorators import action
+
+# class TaskViewSet(viewsets.ModelViewSet):
+#     # this will automatically generate the functionality for retrieving, updating or deleting a task. and also here the object-level permissions are being handled by IsOwnerOrReadOnly.
+#     queryset = Task.objects.all()
+#     serializer_class = TaskSerializers
+#     # parser_classes = [JSONParser, FormParser]
+#     authentication_classes = [TokenAuthentication, SessionAuthentication]
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
+        
+# class UserViewSet(viewsets.ReadOnlyModelViewSet):
+#     # this will automatically generate us the list and detail functionality
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#     authentication_classes = [TokenAuthentication, SessionAuthentication]
+#     permission_classes = [permissions.IsAdminUser]
+
+#     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+#     def user_detail(self, request):
+#         serializer = self.get_serializer(request.user)
+#         return Response(serializer.data)
+    
+
     
 
 
