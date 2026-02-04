@@ -8,7 +8,7 @@
 #     path('taskdetail/<int:pk>/', task_detail),
 #     path('userlist/', user_list),
 #     path('userdetail/', user_detail),
-#     path('generatetoken/', generate_token),
+#     path('generatetoken/', generate_token),       # this urls was being used for the token generation inside the tokenauthentication
 # ]
 # urlpatterns = format_suffix_patterns(urlpatterns)
 
@@ -30,15 +30,17 @@
 
 from django.urls import path
 from task.views import TaskListView, TaskDetailView, UserListView, UserDetailView, GenerateTokenView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
    path('tasklist/', TaskListView.as_view()),
    path('taskdetail/<int:pk>/', TaskDetailView.as_view()),
    path('userlist/', UserListView.as_view()),
    path('userdetail/', UserDetailView.as_view()),
-   path('generatetoken/', GenerateTokenView.as_view())
+   path('generatetoken/', GenerateTokenView.as_view()),
+   path('tokenobtain/', TokenObtainPairView.as_view()),
+   path('tokenrefresh/', TokenRefreshView.as_view()),
 ]
-
 
 
 # # Router Based Urls
