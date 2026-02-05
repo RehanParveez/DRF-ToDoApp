@@ -233,10 +233,12 @@ from rest_framework import generics
 from task.pagination import TaskPagination
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.authtoken.models import Token   # this import was being used for generate token view
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from task.throttles import TaskCreateThrottle, AuthThrottle
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response        # this import was being used for generate token view
 from rest_framework import status                   # this import was being used for generate token view 
 from rest_framework import permissions
@@ -258,7 +260,7 @@ class TaskListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.Gene
     ordering_fields = ['created_at']
     ordering = ['created_at']
     
-    renderer_classes = [JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     
     def get_queryset(self):
        if not self.request.user.is_authenticated:
@@ -267,6 +269,11 @@ class TaskListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.Gene
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        
+    def get_throttles(self):
+        if self.request.method == 'POST':
+            return [TaskCreateThrottle()]
+        return super().get_throttles()
     
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -290,6 +297,9 @@ class TaskDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
         return self.destroy(request, *args, **kwargs)
     
 # User Related Views
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [AuthThrottle]
 
 class GenerateTokenView(APIView):
     permission_classes = [permissions.AllowAny]

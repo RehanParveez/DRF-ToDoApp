@@ -157,3 +157,18 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',
     ]
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '90/day',
+        'anon': '15/day',
+        'task_create': '10/hour',
+        'auth': '5/hour',
+    }, 
+}
+
+

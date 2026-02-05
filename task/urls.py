@@ -29,8 +29,9 @@
 # Generic Class based Views based Urls
 
 from django.urls import path
-from task.views import TaskListView, TaskDetailView, UserListView, UserDetailView, GenerateTokenView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from task.views import TaskListView, TaskDetailView, UserListView, UserDetailView, GenerateTokenView, ThrottledTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
+
 
 urlpatterns = [
    path('tasklist/', TaskListView.as_view()),
@@ -38,8 +39,9 @@ urlpatterns = [
    path('userlist/', UserListView.as_view()),
    path('userdetail/', UserDetailView.as_view()),
    path('generatetoken/', GenerateTokenView.as_view()),
-   path('tokenobtain/', TokenObtainPairView.as_view()),
+#    path('tokenobtain/', TokenObtainPairView.as_view()), # the ThrottledTokenObtainPairView related urls is replacement for this url
    path('tokenrefresh/', TokenRefreshView.as_view()),
+   path('throttletokenobtain/', ThrottledTokenObtainPairView.as_view())
 ]
 
 
