@@ -268,7 +268,10 @@ class TaskListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.Gene
        return Task.objects.filter(user=self.request.user)
     
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        task = serializer.save(user=self.request.user)
+        # storing the last created task in the session
+        self.request.session['last_created_task'] = task.id
+        print(f'user {self.request.user.username} created task {task.id}')
         
     def get_throttles(self):
         if self.request.method == 'POST':
@@ -288,7 +291,13 @@ class TaskDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
     serializer_class = TaskSerializers
     
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        response = self.retrieve(request, *args, **kwargs)
+        # storing the last visited task in the session
+        task_id = self.get_object().id
+        request.session['last_visited_task'] = task_id
+        print(f'user {request.user.username} visited this task {task_id}')
+
+        return response
     
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
