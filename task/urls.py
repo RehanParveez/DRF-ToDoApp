@@ -28,35 +28,40 @@
 
 # Generic Class based Views based Urls
 
-from django.urls import path
-from task.views import TaskListView, TaskDetailView, UserListView, UserDetailView, GenerateTokenView, ThrottledTokenObtainPairView
-from rest_framework_simplejwt.views import TokenRefreshView
+# from django.urls import path
+# from task.views import TaskListView, TaskDetailView, UserListView, UserDetailView, GenerateTokenView, ThrottledTokenObtainPairView
+# from rest_framework_simplejwt.views import TokenRefreshView
 
-
-urlpatterns = [
-   path('tasklist/', TaskListView.as_view()),
-   path('taskdetail/<int:pk>/', TaskDetailView.as_view()),
-   path('userlist/', UserListView.as_view()),
-   path('userdetail/', UserDetailView.as_view()),
-   path('generatetoken/', GenerateTokenView.as_view()),
-#    path('tokenobtain/', TokenObtainPairView.as_view()), # the ThrottledTokenObtainPairView related urls is replacement for this url
-   path('tokenrefresh/', TokenRefreshView.as_view()),
-   path('throttletokenobtain/', ThrottledTokenObtainPairView.as_view())
-]
-
-
-# # Router Based Urls
-# from django.urls import path, include
-# from rest_framework.routers import DefaultRouter
-# from task.views import TaskViewSet, UserViewSet
-
-# router = DefaultRouter()
-# router.register(r'tasks', TaskViewSet)
-# router.register(r'users', UserViewSet)
 
 # urlpatterns = [
-#     path('', include(router.urls))
+#    path('tasklist/', TaskListView.as_view()),
+#    path('taskdetail/<int:pk>/', TaskDetailView.as_view()),
+#    path('userlist/', UserListView.as_view()),
+#    path('userdetail/', UserDetailView.as_view()),
+#    path('generatetoken/', GenerateTokenView.as_view()),
+# #    path('tokenobtain/', TokenObtainPairView.as_view()), # the ThrottledTokenObtainPairView related urls is replacement for this url
+#    path('tokenrefresh/', TokenRefreshView.as_view()),
+#    path('throttletokenobtain/', ThrottledTokenObtainPairView.as_view())
 # ]
+
+
+# Router Based Urls
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from task.views import TaskViewSet, UserViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+router = DefaultRouter()
+router.register(r'tasks', TaskViewSet)
+router.register(r'users', UserViewSet)
+
+urlpatterns = [
+   # URL Versioning
+    path('api/v1/', include(router.urls)),
+    path('api/v1/tokenobtain/', TokenObtainPairView.as_view(), name='token_obtain'),
+    path('api/v1/tokenrefresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+
 
 
 

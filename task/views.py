@@ -227,164 +227,193 @@
 
 # Task Related Views:
 
-from rest_framework.views import APIView            # this import was being used for generate token view  
-from rest_framework import mixins
-from rest_framework import generics
-from task.pagination import TaskPagination
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
-from rest_framework.authtoken.models import Token   # this import was being used for generate token view
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from task.throttles import TaskCreateThrottle, AuthThrottle
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.response import Response        # this import was being used for generate token view
-from rest_framework import status                   # this import was being used for generate token view 
-from rest_framework import permissions
-from task.models import Task
-from task.serializers import TaskSerializers, UserSerializer
-from task.permissions import IsOwnerOrReadOnly
-from django.contrib.auth.models import User
+# from rest_framework.views import APIView            # this import was being used for generate token view  
+# from rest_framework import mixins
+# from rest_framework import generics
+# from task.pagination import TaskPagination
+# from rest_framework import filters
+# from django_filters.rest_framework import DjangoFilterBackend
+# from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+# from rest_framework.authtoken.models import Token   # this import was being used for generate token view
+# from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+# from rest_framework_simplejwt.authentication import JWTAuthentication
+# from task.throttles import TaskCreateThrottle, AuthThrottle
+# from rest_framework_simplejwt.views import TokenObtainPairView
+# from rest_framework.response import Response        # this import was being used for generate token view
+# from rest_framework import status                   # this import was being used for generate token view 
+# from rest_framework import permissions
+# from task.models import Task
+# from task.serializers import TaskSerializers, UserSerializer
+# from task.permissions import IsOwnerOrReadOnly
+# from django.contrib.auth.models import User
 
-class TaskListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
-    authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    serializer_class = TaskSerializers
-    pagination_class = TaskPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+# class TaskListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+#     authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+#     serializer_class = TaskSerializers
+#     pagination_class = TaskPagination
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
-    # fileds to filter here
-    filter_fields = ['status']
-    search_fields = ['title']
-    ordering_fields = ['created_at']
-    ordering = ['created_at']
+#     # fileds to filter here
+#     filter_fields = ['status']
+#     search_fields = ['title']
+#     ordering_fields = ['created_at']
+#     ordering = ['created_at']
     
-    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+#     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     
-    def get_queryset(self):
-       if not self.request.user.is_authenticated:
-          return Task.objects.none()
-       return Task.objects.filter(user=self.request.user)
+#     def get_queryset(self):
+#        if not self.request.user.is_authenticated:
+#           return Task.objects.none()
+#        return Task.objects.filter(user=self.request.user)
     
-    def perform_create(self, serializer):
-        task = serializer.save(user=self.request.user)
-        # storing the last created task in the session
-        self.request.session['last_created_task'] = task.id
-        print(f'user {self.request.user.username} created task {task.id}')
+#     def perform_create(self, serializer):
+#         task = serializer.save(user=self.request.user)
+#         # storing the last created task in the session
+#         self.request.session['last_created_task'] = task.id
+#         print(f'user {self.request.user.username} created task {task.id}')
         
-    def get_throttles(self):
-        if self.request.method == 'POST':
-            return [TaskCreateThrottle()]
-        return super().get_throttles()
+#     def get_throttles(self):
+#         if self.request.method == 'POST':
+#             return [TaskCreateThrottle()]
+#         return super().get_throttles()
     
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
     
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
     
-class TaskDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
-    queryset = Task.objects.all()
-    authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-    serializer_class = TaskSerializers
+# class TaskDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+#     queryset = Task.objects.all()
+#     authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+#     serializer_class = TaskSerializers
     
-    def get(self, request, *args, **kwargs):
-        response = self.retrieve(request, *args, **kwargs)
-        # storing the last visited task in the session
-        task_id = self.get_object().id
-        request.session['last_visited_task'] = task_id
-        print(f'user {request.user.username} visited this task {task_id}')
+#     def get(self, request, *args, **kwargs):
+#         response = self.retrieve(request, *args, **kwargs)
+#         # storing the last visited task in the session
+#         task_id = self.get_object().id
+#         request.session['last_visited_task'] = task_id
+#         print(f'user {request.user.username} visited this task {task_id}')
 
-        return response
+#         return response
     
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
     
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+#     def delete(self, request, *args, **kwargs):
+#         return self.destroy(request, *args, **kwargs)
     
-# User Related Views
+# # User Related Views
 
-class ThrottledTokenObtainPairView(TokenObtainPairView):
-    throttle_classes = [AuthThrottle]
+# class ThrottledTokenObtainPairView(TokenObtainPairView):
+#     throttle_classes = [AuthThrottle]
 
-class GenerateTokenView(APIView):
-    permission_classes = [permissions.AllowAny]
+# class GenerateTokenView(APIView):
+#     permission_classes = [permissions.AllowAny]
     
-    def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        if not username:
-            return Response({'error': 'username is required'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response({'error': 'user is not found'}, status=status.HTTP_404_NOT_FOUND)
+#     def post(self, request, *args, **kwargs):
+#         username = request.data.get('username')
+#         if not username:
+#             return Response({'error': 'username is required'}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             user = User.objects.get(username=username)
+#         except User.DoesNotExist:
+#             return Response({'error': 'user is not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
+#         token, created = Token.objects.get_or_create(user=user)
+#         return Response({'token': token.key})
 
-class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = User.objects.all()
-    permission_classes = [permissions.IsAdminUser]
-    serializer_class = UserSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+# class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
+#     queryset = User.objects.all()
+#     permission_classes = [permissions.IsAdminUser]
+#     serializer_class = UserSerializer
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
-    filter_fields = ['username', 'email']
-    search_fields = ['username', 'email']
-    ordering_fields = ['id', 'username']
-    ordering = ['id']   
+#     filter_fields = ['username', 'email']
+#     search_fields = ['username', 'email']
+#     ordering_fields = ['id', 'username']
+#     ordering = ['id']   
     
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
     
-class UserDetailView(generics.RetrieveAPIView):
-    authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = UserSerializer
+# class UserDetailView(generics.RetrieveAPIView):
+#     authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
+#     permission_classes = [permissions.IsAuthenticated]
+#     serializer_class = UserSerializer
     
-    def get_object(self):
-        return self.request.user
+#     def get_object(self):
+#         return self.request.user
    
     
 
 # # Writing views using Viewsets()
 
-# from rest_framework import viewsets
-# from rest_framework import permissions
-# # from rest_framework.parsers import JSONParser, FormParser
-# from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-# from django.contrib.auth.models import User
-# from rest_framework.response import Response
-# from task.models import Task
-# from task.serializers import TaskSerializers, UserSerializer
-# from task.permissions import IsOwnerOrReadOnly
-# from rest_framework.decorators import action
+from rest_framework import viewsets
+from rest_framework import permissions
+# from rest_framework.parsers import JSONParser, FormParser
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth.models import User
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from task.models import Task
+from task.serializers import TaskSerializers, UserSerializer
+from task.permissions import IsOwnerOrReadOnly
 
-# class TaskViewSet(viewsets.ModelViewSet):
-#     # this will automatically generate the functionality for retrieving, updating or deleting a task. and also here the object-level permissions are being handled by IsOwnerOrReadOnly.
-#     queryset = Task.objects.all()
-#     serializer_class = TaskSerializers
-#     # parser_classes = [JSONParser, FormParser]
-#     authentication_classes = [TokenAuthentication, SessionAuthentication]
-#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializers
+    # parser_classes = [JSONParser, FormParser]
+    authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated():
+            return Task.objects.none
+        return Task.objects.filter(user=user).select_related('user')
+    # assigning the user automatically during the creation
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
         
-# class UserViewSet(viewsets.ReadOnlyModelViewSet):
-#     # this will automatically generate us the list and detail functionality
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
-#     authentication_classes = [TokenAuthentication, SessionAuthentication]
-#     permission_classes = [permissions.IsAdminUser]
-
-#     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
-#     def user_detail(self, request):
-#         serializer = self.get_serializer(request.user)
-#         return Response(serializer.data)
+    # the permission that only admin can delete 
+    def get_permissions(self):
+        if self.action == 'destroy':
+            return [permissions.IsAdminUser()]
+        return [permission() for permission in self.permission_classes]
     
+    # creating the action to mark the task like its done
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def mark_done(self, request, pk=None):
+        task = self.get_object()
+        task.status = 'completed'
+        task.save()
+        return Response({'message': 'task is done', 'task_id': task.id})
+    
+    # creating the stats about the tasks 
+    @action(detail=False, methods=['get'])
+    def stats(self,  request):
+        queryset = self.get_queryset()
+        total = queryset.count()
+        completed = queryset.filter(status='completed').count()
+        pending = queryset.filter(status='pending').count()
+        
+        return Response({"total_tasks": total, "completed_tasks": completed, "pending_tasks": pending})
+        
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    # this will automatically generate us the list and detail functionality
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication, JWTAuthentication]
+    permission_classes = [permissions.IsAdminUser]
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def user_detail(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
     
 
